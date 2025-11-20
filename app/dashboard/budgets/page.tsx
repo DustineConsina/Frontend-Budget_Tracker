@@ -1,70 +1,100 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, List, PlusCircle, PieChart, CreditCard, User, Edit } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAppContext } from "../../Context/AppContext";
+
+type CategoryBudget = {
+  name: string;
+  used: number;
+  limit: number;
+};
 
 export default function BudgetsPage() {
   const pathname = usePathname();
+
+  
+  const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudget[]>([]);
+  const [totalBudget, setTotalBudget] = useState<number>(0);
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const { user, logout } = useAppContext(); 
+
+  useEffect(() => {
+    setTotalBudget(0);
+    setTotalSpent(0);
+
+    setCategoryBudgets([
+      { name: "Books", used: 0, limit: 100 },
+      { name: "Utilities", used: 0, limit: 250 },
+    ]);
+  }, []);
+
+  const percentUsed = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+
   const sidebarItems = [
-    { name: "Home", icon: <Home size={18} />, path: "/dashboard" },
-    { name: "Transactions", icon: <List size={18} />, path: "/dashboard/transactions" },
-    { name: "Add", icon: <PlusCircle size={18} />, path: "/dashboard/add" },
-    { name: "Budgets", icon: <PieChart size={18} />, path: "/dashboard/budgets" },
-    { name: "Accounts", icon: <CreditCard size={18} />, path: "/dashboard/accounts" },
-    { name: "Profile", icon: <User size={18} />, path: "/dashboard/profile" },
+    { name: "Home", icon: Home, path: "/dashboard" },
+    { name: "Transactions", icon: List, path: "/dashboard/transaction" },
+    { name: "Add", icon: PlusCircle, path: "/dashboard/add" },
+    { name: "Budgets", icon: PieChart, path: "/dashboard/budgets" },
+    { name: "Accounts", icon: CreditCard, path: "/dashboard/accounts" },
+    { name: "Profile", icon: User, path: "/dashboard/profile" },
   ];
-
-  const categoryBudgets = [
-    { name: "Books", used: 65, limit: 100 },
-    { name: "Utilities", used: 150, limit: 250 },
-  ];
-
-  const totalBudget = 1900;
-  const totalSpent = 494;
-  const percentUsed = (totalSpent / totalBudget) * 100;
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md flex flex-col justify-between">
+      {/* ---------------- DESKTOP SIDEBAR ---------------- */}
+      <aside className="hidden md:flex w-64 bg-white shadow-md p-4 flex flex-col justify-between">
         <div>
-          <div className="p-6 flex items-center space-x-2">
-            <div className="w-8 h-8 bg-black rounded-lg"></div>
+          <div className="flex items-center mb-8">
+            <div className="bg-white text-white rounded-xl p-2 mr-2">
+              <img src="/logo.avif" alt="Logo" className="w-12 h-12" />
+            </div>
             <h1 className="text-lg font-semibold">Budget Tracker</h1>
           </div>
-          <nav className="px-3">
-            {sidebarItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg mb-1 ${
-                  pathname === item.path
-                    ? "bg-gray-100 text-black font-medium"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
+
+          <nav className="space-y-2">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className={`flex items-center w-full p-2 rounded-lg ${
+                    pathname === item.path
+                      ? "bg-gray-200 text-black"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Icon size={18} className="mr-2" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
         <div className="p-4 border-t flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-              AJ
+              {user?.name ? user.name[0].toUpperCase() : "U"}
             </div>
             <div>
-              <p className="text-sm font-medium">Alex Johnson</p>
-              <p className="text-xs text-gray-500">alex.johnson@example.com</p>
+              <p className="text-sm font-medium">{user?.name || "User"}</p>
+              <p className="text-xs text-gray-500">{user?.email || "user@example.com"}</p>
             </div>
           </div>
-          <button className="text-sm text-gray-500 hover:text-black text-left">⏻ Sign Out</button>
+          <button
+            className="text-sm text-gray-500 hover:text-black text-left"
+            onClick={logout} 
+          >
+            ⏻ Sign Out
+          </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* ---------------- MAIN CONTENT ---------------- */}
       <main className="flex-1 p-10">
         <h1 className="text-2xl font-semibold mb-6">Budgets</h1>
 
@@ -84,8 +114,8 @@ export default function BudgetsPage() {
           <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
             <div
               className="h-2 bg-black rounded-full"
-              style={{ width: `${percentUsed}%` }}
-            ></div>
+              style={{ width: `${Math.min(100, Math.max(0, percentUsed))}%` }}
+            />
           </div>
 
           <p className="text-xs text-gray-500">{percentUsed.toFixed(1)}% of budget used</p>
@@ -98,24 +128,21 @@ export default function BudgetsPage() {
         {/* Category Budgets */}
         <div className="space-y-4">
           <h2 className="text-sm font-medium text-gray-600">Category Budgets</h2>
+
           {categoryBudgets.map((cat) => {
-            const percent = (cat.used / cat.limit) * 100;
+            const percent = cat.limit > 0 ? (cat.used / cat.limit) * 100 : 0;
             const remaining = cat.limit - cat.used;
 
             return (
               <div key={cat.name} className="bg-white p-5 rounded-2xl shadow">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                        cat.name === "Books" ? "bg-teal-100 text-teal-600" : "bg-orange-100 text-orange-600"
-                      }`}
-                    >
-                      {cat.name[0]}
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                      {cat.name[0] ?? "?"}
                     </div>
                     <p className="font-medium">{cat.name}</p>
                   </div>
-                  <button className="text-gray-500 hover:text-black">
+                  <button className="text-gray-500 hover:text-black" aria-label={`Edit ${cat.name}`}>
                     <Edit size={16} />
                   </button>
                 </div>
@@ -123,12 +150,14 @@ export default function BudgetsPage() {
                 <p className="text-sm text-gray-500 mb-1">
                   ${cat.used.toFixed(2)} / ${cat.limit.toFixed(2)}
                 </p>
+
                 <div className="w-full h-2 bg-gray-200 rounded-full mb-1">
                   <div
                     className="h-2 bg-black rounded-full"
-                    style={{ width: `${percent}%` }}
-                  ></div>
+                    style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+                  />
                 </div>
+
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">{percent.toFixed(1)}% used</span>
                   <span className="text-green-600 font-medium">${remaining.toFixed(2)} left</span>
@@ -138,6 +167,22 @@ export default function BudgetsPage() {
           })}
         </div>
       </main>
+
+      {/* ---------------- MOBILE BOTTOM NAV ---------------- */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 flex justify-around p-2 shadow-md">
+        {sidebarItems.map((item) => (
+          <Link
+            key={item.name}
+            href={item.path}
+            className={`flex flex-col items-center text-xs ${
+              pathname === item.path ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            <item.icon size={24} />
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -44,13 +45,11 @@ const Dashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-4 flex flex-col justify-between">
+      {/* ---------------- DESKTOP SIDEBAR ---------------- */}
+      <aside className="hidden md:flex w-64 bg-white shadow-md p-4 flex-col justify-between">
         <div>
           <div className="flex items-center mb-8">
-            <div className="bg-black text-white rounded-xl p-2 mr-2">
-              <CreditCard size={22} />
-            </div>
+            <img src="/logo.avif" className="w-12 h-12 mr-2" />
             <h1 className="text-lg font-semibold">Budget Tracker</h1>
           </div>
 
@@ -59,7 +58,7 @@ const Dashboard = () => {
               <Link
                 key={item.label}
                 href={item.path}
-                className={`flex items-center w-full p-2 rounded-lg ${
+                className={`flex items-center p-2 rounded-lg ${
                   pathname === item.path
                     ? "bg-gray-200 text-black"
                     : "text-gray-600 hover:bg-gray-100"
@@ -72,13 +71,19 @@ const Dashboard = () => {
           </nav>
         </div>
 
-        <button className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+        <button
+          onClick={() => {
+            localStorage.removeItem("token");
+            window.location.href = "/Auth";
+          }}
+          className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+        >
           <LogOut size={18} className="mr-2" /> Sign Out
         </button>
       </aside>
 
-      {/* Main Dashboard */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      {/* ---------------- MAIN CONTENT ---------------- */}
+      <main className="flex-1 p-8 overflow-y-auto mt-0 md:mt-0">
         <h2 className="text-2xl font-semibold mb-6">Home</h2>
 
         {/* Top Section */}
@@ -104,14 +109,9 @@ const Dashboard = () => {
             <h4 className="font-semibold mb-4">Spending</h4>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
-                <Pie
-                  data={categoryData}
-                  dataKey="value"
-                  outerRadius={70}
-                  fill="#8884d8"
-                >
+                <Pie data={categoryData} dataKey="value" outerRadius={70}>
                   {categoryData.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={index} fill={COLORS[index]} />
                   ))}
                 </Pie>
               </PieChart>
@@ -143,10 +143,7 @@ const Dashboard = () => {
             <h4 className="font-semibold mb-4">Category Breakdown</h4>
             <ul className="space-y-2 text-sm">
               {categoryData.map((cat, index) => (
-                <li
-                  key={cat.name}
-                  className="flex justify-between items-center"
-                >
+                <li key={cat.name} className="flex justify-between items-center">
                   <span className="flex items-center">
                     <span
                       className="w-3 h-3 rounded-full mr-2"
@@ -179,14 +176,29 @@ const Dashboard = () => {
                     t.amount > 0 ? "text-green-600" : "text-red-500"
                   }`}
                 >
-                  {t.amount > 0 ? "+" : ""}
-                  ${t.amount.toFixed(2)}
+                  {t.amount > 0 ? "+" : ""}${t.amount.toFixed(2)}
                 </p>
               </div>
             ))}
           </div>
         </div>
       </main>
+
+      {/* ---------------- MOBILE BOTTOM NAV ---------------- */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 flex justify-around p-2 shadow-md">
+        {sidebarItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.path}
+            className={`flex flex-col items-center text-xs ${
+              pathname === item.path ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            <item.icon size={24} />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 };

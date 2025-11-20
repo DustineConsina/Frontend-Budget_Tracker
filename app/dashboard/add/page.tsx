@@ -2,7 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, List, PlusCircle, PieChart, CreditCard, User } from "lucide-react";
+import { Home, List, PlusCircle, PieChart, CreditCard, User, LogOut } from "lucide-react";
+import { useAppContext } from "../../Context/AppContext";
 
 export default function AddTransactionPage() {
   const pathname = usePathname();
@@ -12,6 +13,7 @@ export default function AddTransactionPage() {
   const [category, setCategory] = useState("");
   const [account, setAccount] = useState("");
   const [note, setNote] = useState("");
+  const { user, logout } = useAppContext();
 
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,56 +30,67 @@ export default function AddTransactionPage() {
 
   const quickAmounts = [10, 20, 50, 100, 200, 500];
   const sidebarItems = [
-    { name: "Home", icon: <Home size={18} />, path: "/dashboard" },
-    { name: "Transactions", icon: <List size={18} />, path: "/dashboard/transaction" },
-    { name: "Add", icon: <PlusCircle size={18} />, path: "/dashboard/add" },
-    { name: "Budgets", icon: <PieChart size={18} />, path: "/dashboard/budgets" },
-    { name: "Accounts", icon: <CreditCard size={18} />, path: "/dashboard/accounts" },
-    { name: "Profile", icon: <User size={18} />, path: "/dashboard/profile" },
+    { name: "Home", icon: Home, path: "/dashboard" },
+    { name: "Transactions", icon: List, path: "/dashboard/transaction" },
+    { name: "Add", icon: PlusCircle, path: "/dashboard/add" },
+    { name: "Budgets", icon: PieChart, path: "/dashboard/budgets" },
+    { name: "Accounts", icon: CreditCard, path: "/dashboard/accounts" },
+    { name: "Profile", icon: User, path: "/dashboard/profile" },
   ];
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md flex flex-col justify-between">
+      {/* ---------------- DESKTOP SIDEBAR ---------------- */}
+      <aside className="hidden md:flex w-64 bg-white shadow-md p-4 flex flex-col justify-between">
         <div>
-          <div className="p-6 flex items-center space-x-2">
-            <div className="w-8 h-8 bg-black rounded-lg"></div>
+          <div className="flex items-center mb-8">
+            <div className="bg-white text-white rounded-xl p-2 mr-2">
+              <img src="/logo.avif" alt="Logo" className="w-12 h-12" />
+            </div>
             <h1 className="text-lg font-semibold">Budget Tracker</h1>
           </div>
-          <nav className="px-3">
-            {sidebarItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg mb-1 ${
-                  pathname === item.path
-                    ? "bg-gray-100 text-black font-medium"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
+
+          <nav className="space-y-2">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className={`flex items-center w-full p-2 rounded-lg ${
+                    pathname === item.path
+                      ? "bg-gray-200 text-black"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Icon size={18} className="mr-2" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        <div className="p-4 border-t flex items-center justify-between">
+        <div className="p-4 border-t flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-              AJ
+              {user?.name ? user.name[0].toUpperCase() : "U"}
             </div>
             <div>
-              <p className="text-sm font-medium">Alex Johnson</p>
-              <p className="text-xs text-gray-500">alex.johnson@example.com</p>
+              <p className="text-sm font-medium">{user?.name || "User"}</p>
+              <p className="text-xs text-gray-500">{user?.email || "user@example.com"}</p>
             </div>
           </div>
-          <button className="text-sm text-gray-500 hover:text-black">⏻</button>
+          <button
+            className="text-sm text-gray-500 hover:text-black text-left"
+            onClick={logout}
+          >
+            ⏻ Sign Out
+          </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* ---------------- MAIN CONTENT ---------------- */}
       <main className="flex-1 p-8 flex flex-col items-center">
         <div className="w-full max-w-2xl">
           <h1 className="text-2xl font-semibold mb-6">Add</h1>
@@ -203,6 +216,22 @@ export default function AddTransactionPage() {
           </div>
         </div>
       </main>
+
+      {/* ---------------- MOBILE BOTTOM NAV ---------------- */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 flex justify-around p-2 shadow-md">
+        {sidebarItems.map((item) => (
+          <Link
+            key={item.name}
+            href={item.path}
+            className={`flex flex-col items-center text-xs ${
+              pathname === item.path ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            <item.icon size={24} />
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CreditCard, PlusCircle, Wallet, User, LogOut, Filter } from "lucide-react";
+import {
+  Home,
+  List,
+  PlusCircle,
+  Wallet,
+  User,
+  CreditCard,
+  Filter,
+  LogOut,
+} from "lucide-react";
 import { useState } from "react";
 
 const Transactions = () => {
@@ -11,7 +20,7 @@ const Transactions = () => {
 
   const sidebarItems = [
     { label: "Home", icon: Home, path: "/dashboard" },
-    { label: "Transactions", icon: CreditCard, path: "/dashboard/transaction" },
+    { label: "Transactions", icon: List, path: "/dashboard/transaction" },
     { label: "Add", icon: PlusCircle, path: "/dashboard/add" },
     { label: "Budgets", icon: Wallet, path: "/dashboard/budgets" },
     { label: "Accounts", icon: CreditCard, path: "/dashboard/accounts" },
@@ -33,23 +42,23 @@ const Transactions = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-4 flex flex-col justify-between">
+
+      {/* ---------------- DESKTOP SIDEBAR ---------------- */}
+      <aside className="hidden md:flex w-64 bg-white shadow-md p-4 flex-col justify-between">
         <div>
+          {/* Logo */}
           <div className="flex items-center mb-8">
-            <div className="bg-black text-white rounded-xl p-2 mr-2">
-              <CreditCard size={22} />
-            </div>
+            <img src="/logo.avif" alt="Logo" className="w-12 h-12 mr-2" />
             <h1 className="text-lg font-semibold">Budget Tracker</h1>
           </div>
 
-          {/* Sidebar Navigation */}
+          {/* Navigation */}
           <nav className="space-y-2">
             {sidebarItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.path}
-                className={`flex items-center w-full p-2 rounded-lg ${
+                className={`flex items-center p-2 rounded-lg ${
                   pathname === item.path
                     ? "bg-gray-200 text-black"
                     : "text-gray-600 hover:bg-gray-100"
@@ -63,13 +72,19 @@ const Transactions = () => {
         </div>
 
         {/* Sign Out */}
-        <button className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+        <button
+          onClick={() => {
+            localStorage.removeItem("token");
+            window.location.href = "/Auth";
+          }}
+          className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+        >
           <LogOut size={18} className="mr-2" /> Sign Out
         </button>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      {/* ---------------- MAIN CONTENT ---------------- */}
+      <main className="flex-1 p-8 overflow-y-auto md:mt-0">
         <h2 className="text-2xl font-semibold mb-6">Transactions</h2>
 
         {/* Filters */}
@@ -80,7 +95,7 @@ const Transactions = () => {
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3 mb-4 overflow-x-auto">
             {["All", "Income", "Expense"].map((type) => (
               <button
                 key={type}
@@ -96,7 +111,7 @@ const Transactions = () => {
             ))}
           </div>
 
-          {/* Dropdown filters */}
+          {/* Dropdowns */}
           <div className="flex gap-3">
             <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
               <option>All Categories</option>
@@ -142,6 +157,22 @@ const Transactions = () => {
           ))}
         </div>
       </main>
+
+      {/* ---------------- MOBILE BOTTOM NAV ---------------- */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 flex justify-around p-2 shadow-md">
+        {sidebarItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.path}
+            className={`flex flex-col items-center text-xs ${
+              pathname === item.path ? "text-gray-900" : "text-gray-500"
+            }`}
+          >
+            <item.icon size={24} />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 };

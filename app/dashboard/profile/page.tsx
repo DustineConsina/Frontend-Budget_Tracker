@@ -15,10 +15,18 @@ import {
   Info,
 } from "lucide-react";
 import { useAppContext } from "../../Context/AppContext";
+import { useState } from "react";
 
 export default function ProfilePage() {
   const pathname = usePathname();
-  const { user, logout } = useAppContext();
+  const { user, setUser, logout, token } = useAppContext();
+
+  const [editMode, setEditMode] = useState(false);
+
+  
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [currency, setCurrency] = useState(user?.currency || "USD - US Dollar");
 
   const sidebarItems = [
     { name: "Home", icon: Home, path: "/dashboard" },
@@ -37,9 +45,44 @@ export default function ProfilePage() {
     );
   }
 
-  const currency = user.currency || "USD - US Dollar";
-  const language = user.language || "English";
   const version = user.version || "v1.0.0";
+
+  // ------------------ UPDATE PROFILE TO BACKEND ------------------
+  const handleUpdate = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/user/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          currency,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert("Failed to update profile");
+        return;
+      }
+
+      
+      setUser(data.user);
+
+      setEditMode(false);
+      alert("Profile updated successfully!");
+
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong.");
+    }
+  };
+
+  
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -82,10 +125,10 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="bg-white rounded-2xl p-6 shadow mb-6 flex flex-col items-center text-center">
           <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-xl font-semibold mb-3">
-            {user.name.charAt(0).toUpperCase()}
+            {name.charAt(0).toUpperCase()}
           </div>
-          <h2 className="text-lg font-medium">{user.name}</h2>
-          <p className="text-sm text-gray-500">{user.email}</p>
+          <h2 className="text-lg font-medium">{name}</h2>
+          <p className="text-sm text-gray-500">{email}</p>
         </div>
 
         {/* Account Information */}
@@ -94,41 +137,73 @@ export default function ProfilePage() {
             <h3 className="text-sm font-semibold text-gray-700">
               Account Information
             </h3>
-            <button className="text-sm text-gray-500 hover:text-black">Edit</button>
+
+            {!editMode ? (
+              <button
+                onClick={() => setEditMode(true)}
+                className="text-sm text-gray-500 hover:text-black"
+              >
+                Edit
+              </button>
+            ) : (
+              <button
+                onClick={handleUpdate}
+                className="text-sm text-blue-500 hover:text-blue-700"
+              >
+                Save
+              </button>
+            )}
           </div>
+
           <div className="space-y-4">
+            {/* Name FIELD */}
             <div>
               <label className="text-xs text-gray-500 flex items-center gap-2">
                 <User size={14} /> Name
               </label>
               <input
                 type="text"
-                disabled
-                value={user.name}
-                className="w-full mt-1 p-2 bg-gray-50 rounded-lg border text-sm text-gray-700"
+                disabled={!editMode}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={`w-full mt-1 p-2 rounded-lg border text-sm ${
+                  editMode ? "bg-white" : "bg-gray-50 text-gray-700"
+                }`}
               />
             </div>
+
+            {/* Email FIELD */}
             <div>
               <label className="text-xs text-gray-500 flex items-center gap-2">
                 📧 Email
               </label>
               <input
                 type="email"
-                disabled
-                value={user.email}
-                className="w-full mt-1 p-2 bg-gray-50 rounded-lg border text-sm text-gray-700"
+                disabled={!editMode}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-full mt-1 p-2 rounded-lg border text-sm ${
+                  editMode ? "bg-white" : "bg-gray-50 text-gray-700"
+                }`}
               />
             </div>
+
+            {/* Currency FIELD */}
             <div>
               <label className="text-xs text-gray-500 flex items-center gap-2">
                 💲 Currency
               </label>
               <select
-                disabled
+                disabled={!editMode}
                 value={currency}
-                className="w-full mt-1 p-2 bg-gray-50 rounded-lg border text-sm text-gray-700"
+                onChange={(e) => setCurrency(e.target.value)}
+                className={`w-full mt-1 p-2 rounded-lg border text-sm ${
+                  editMode ? "bg-white" : "bg-gray-50 text-gray-700"
+                }`}
               >
-                <option>{currency}</option>
+                <option>USD - US Dollar</option>
+                <option>PHP - Philippine Peso</option>
+                <option>EUR - Euro</option>
               </select>
             </div>
           </div>
@@ -145,7 +220,7 @@ export default function ProfilePage() {
                 </p>
                 <p className="text-xs text-gray-500">Receive budget alerts</p>
               </div>
-              <input type="checkbox" className="toggle-checkbox" defaultChecked />
+              <input type="checkbox" defaultChecked />
             </div>
             <div className="flex justify-between items-center">
               <div>
@@ -154,14 +229,14 @@ export default function ProfilePage() {
                 </p>
                 <p className="text-xs text-gray-500">Toggle dark theme</p>
               </div>
-              <input type="checkbox" className="toggle-checkbox" />
+              <input type="checkbox" />
             </div>
             <div className="flex justify-between items-center">
               <div>
                 <p className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Globe size={16} /> Language
                 </p>
-                <p className="text-xs text-gray-500">{language}</p>
+                <p className="text-xs text-gray-500">{user.language || "English"}</p>
               </div>
               <button className="text-sm text-gray-500 hover:text-black">Change</button>
             </div>
@@ -183,7 +258,9 @@ export default function ProfilePage() {
             <Info size={16} />
             <div>
               <p>Budget Tracker App {version}</p>
-              <p className="text-xs text-gray-500">Manage your finances with ease</p>
+              <p className="text-xs text-gray-500">
+                Manage your finances with ease
+              </p>
             </div>
           </div>
         </div>
@@ -198,7 +275,7 @@ export default function ProfilePage() {
         </div>
       </main>
 
-      {/* ---------------- MOBILE BOTTOM NAV ---------------- */}
+      {/* Mobile Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 flex justify-around p-2 shadow-md">
         {sidebarItems.map((item) => (
           <Link
